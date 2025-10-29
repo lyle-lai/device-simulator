@@ -1,0 +1,28 @@
+{
+  "profileName": "Mindray Monitor HL7",
+  "enabled": false,
+  "device": {
+    "id": "Sim-Mindray-001",
+    "description": "模拟迈瑞监护仪,通过 TCP 发送 HL7 v2.6 ORU消息"
+  },
+  "protocol": {
+    "type": "tcp-client",
+    "host": "127.0.0.1",
+    "port": 18888,
+    "reconnectDelay": 5000
+  },
+  "codec": {
+    "type": "passthrough"
+  },
+  "strategy": {
+    "type": "periodic-push",
+    "intervalMillis": 5000,
+    "dataGenerator": {
+      "type": "random",
+      "properties": [
+        { "key": "MDC_ECG_HEART_RATE", "dataType": "int", "min": 60, "max": 120 },
+        { "key": "MDC_PULS_OXIM_SAT_O2", "dataType": "int", "min": 95, "max": 100 }
+      ]
+    }
+  }
+}

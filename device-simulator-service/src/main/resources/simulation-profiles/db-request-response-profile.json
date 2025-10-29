@@ -1,0 +1,24 @@
+{
+  "profileName": "DB Request-Response TCP Server",
+  "enabled": true,
+  "device": {
+    "id": "sim-db-req-resp-001",
+    "description": "A TCP server that replies to requests based on database rules, with random responses."
+  },
+  "protocol": {
+    "type": "tcp-server",
+    "properties": {
+      "port": 8890
+    }
+  },
+  "codec": {
+    "type": "hex",
+    "properties": {}
+  },
+  "strategy": {
+    "type": "db-request-response",
+    "properties": {
+      "rule_group": "DEFAULT_HEX_RULES"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "profileName": "Request-Response TCP Server (Hex)",
+  "enabled": true,
+  "device": {
+    "id": "sim-req-resp-hex-001",
+    "description": "A TCP server that replies to specific hex requests based on a mapping."
+  },
+  "protocol": {
+    "type": "tcp-server",
+    "properties": {
+      "port": 8889
+    }
+  },
+  "codec": {
+    "type": "hex",
+    "properties": {}
+  },
+  "strategy": {
+    "type": "request-response",
+    "properties": {
+      "mappings": [
+        {
+          "request": {
+            "hex_data": "CAFED00D"
+          },
+          "response": {
+            "hex_data": "CAFEBEEF"
+          }
+        },
+        {
+          "request": {
+            "hex_data": "01020304"
+          },
+          "response": {
+            "hex_data": "05060708"
+          }
+        },
+        {
+          "request": {
+            "hex_data": "50494E47"
+          },
+          "response": {
+            "hex_data": "504F4E47"
+          }
+        }
+      ]
+    }
+  }
+}

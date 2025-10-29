@@ -1,0 +1,25 @@
+{
+  "profileName": "Zhongdao Infusion Pump JSON",
+  "enabled": false,
+  "device": {
+    "id": "ZD-Pump-SN002"
+  },
+  "protocol": {
+    "type": "passthrough-protocol"
+  },
+  "codec": {
+    "type": "json"
+  },
+  "strategy": {
+    "type": "periodic-push",
+    "intervalMillis": 10000,
+    "dataGenerator": {
+      "type": "random",
+      "properties": [
+        { "key": "flowRate", "dataType": "double", "min": 5.0, "max": 20.0, "precision": 1 },
+        { "key": "remainingVolume", "dataType": "double", "min": 0, "max": 500, "precision": 0 },
+        { "key": "status", "dataType": "enum", "values": ["running", "paused", "empty"] }
+      ]
+    }
+  }
+}

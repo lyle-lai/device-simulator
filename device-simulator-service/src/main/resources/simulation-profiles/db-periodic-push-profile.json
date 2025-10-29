@@ -1,0 +1,26 @@
+{
+  "profileName": "DB Periodic Push TCP Client",
+  "enabled": true,
+  "device": {
+    "id": "sim-db-push-001",
+    "description": "A TCP client that periodically pushes random data from database."
+  },
+  "protocol": {
+    "type": "tcp-client",
+    "properties": {
+      "host": "127.0.0.1",
+      "port": 8888
+    }
+  },
+  "codec": {
+    "type": "hex",
+    "properties": {}
+  },
+  "strategy": {
+    "type": "db-periodic-push",
+    "properties": {
+      "intervalMillis": 2000,
+      "payload_group": "DEFAULT_PUSH_PAYLOADS"
+    }
+  }
+}

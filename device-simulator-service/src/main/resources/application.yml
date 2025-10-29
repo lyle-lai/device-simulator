@@ -1,0 +1,30 @@
+server:
+  port: 18080
+
+spring:
+  application:
+    name: device-simulator-service
+  datasource:
+    url: jdbc:mysql://10.80.210.73:3306/simulator_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: xinsec
+    password: DB.xinsec@2018
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  # JPA properties are removed as we are using MyBatis-Plus
+  # jpa:
+  #   hibernate:
+  #     ddl-auto: update
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml # If you use XML mappers
+  type-aliases-package: com.xinsec.devicesimulator.service.entity # Package where your entities are located
+
+
+simulator:
+  config:
+    # 'file' (default) or 'database'.
+    # 'file': Loads simulation profiles from the JSON files specified in the 'file.path' directory.
+    # 'database': Loads simulation profiles from the database.
+    provider: file

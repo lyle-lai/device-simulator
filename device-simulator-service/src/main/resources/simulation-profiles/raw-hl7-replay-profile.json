@@ -1,0 +1,34 @@
+{
+  "profileName": "HL7 Raw Message Replay",
+  "enabled": false,
+  "device": {
+    "id": "Replay-Device-01"
+  },
+  "protocol": {
+    "type": "tcp-client",
+    "host": "127.0.0.1",
+    "port": 18888
+  },
+  "codec": {
+    "type": "passthrough"
+  },
+  "strategy": {
+    "type": "raw-replay",
+    "intervalMillis": 3000,
+    "replayMode": "sequential",
+    "messages": [
+      {
+        "encoding": "hex",
+        "data": "0B4D53487C5E7E5C267C4D494E445241595F4E2D5345524945535E303041303337303039393030343738335E4555492D36347C7C7C7C32303231303131343136353134393030302B303030307C7C4F52555E5230315E4F52555F5230317C3230397C507C322E360D4F42587C317C4E4D7C3134373834325E4D43_ECG_HEART_RATE_MDC7C7C957C7C7C44454D4F1COD"
+      },
+      {
+        "encoding": "base64",
+        "data": "C01TSHxbXlx&fE1JTkRSQVlfTi1TRVJJRVNeMDBBMDM3MDA5OTAwNDc4M15FVUktNjR8fHx8MjAyMTAxMTQxNjUxNDkwMDArMDAwMHx8T1JVX|IwMV5PU|VfUjAxHzIwOXxQfDluNg0KT0JYfDF8Tk18MTQ3ODQyXk1EQ19FQ0dfSEVBUIRfUkFURV5NREN8fDk4fHx8REVNTx0N"
+      },
+      {
+        "encoding": "utf8",
+        "data": "\u000bMSH|^~\\&|||||2024...|ORU^R01|... \u001c\r"
+      }
+    ]
+  }
+}
