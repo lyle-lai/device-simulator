@@ -155,6 +155,11 @@
                     <el-form-item label="端口">
                         <el-input-number v-model="currentProfile.protocol.properties.port" :min="1" :max="65535"></el-input-number>
                     </el-form-item>
+                    <el-form-item label="本地IP">
+                        <el-tooltip content="可选，指定客户端连接时绑定的本地IP地址，用于IP鉴权等场景" placement="top">
+                            <el-input v-model="currentProfile.protocol.properties.localAddress" placeholder="留空则使用默认IP"></el-input>
+                        </el-tooltip>
+                    </el-form-item>
                 </template>
                 <template v-if="currentProfile.protocol.type === 'tcp-server'">
                     <el-form-item label="监听端口">

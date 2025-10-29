@@ -16,7 +16,7 @@ const App = {
                 profileName: '',
                 enabled: true,
                 device: { id: '' },
-                protocol: { type: 'passthrough', properties: { host: '', port: null } },
+                protocol: { type: 'passthrough', properties: { host: '', port: null, localAddress: '' } }, // Added localAddress
                 codec: { type: 'passthrough' },
                 strategy: {
                     type: 'passthrough',
@@ -200,8 +200,8 @@ const App = {
                 this.currentProfile = JSON.parse(JSON.stringify(profile));
                 // 确保所有嵌套对象和属性都存在，以避免v-model报错
                 this.currentProfile.device = this.currentProfile.device || { id: '' };
-                this.currentProfile.protocol = this.currentProfile.protocol || { type: 'passthrough', properties: { host: '', port: null } };
-                this.currentProfile.protocol.properties = this.currentProfile.protocol.properties || { host: '', port: null };
+                this.currentProfile.protocol = this.currentProfile.protocol || { type: 'passthrough', properties: { host: '', port: null, localAddress: '' } };
+                this.currentProfile.protocol.properties = this.currentProfile.protocol.properties || { host: '', port: null, localAddress: '' };
                 this.currentProfile.codec = this.currentProfile.codec || { type: 'passthrough' };
                 this.currentProfile.strategy = this.currentProfile.strategy || { type: 'passthrough', properties: { intervalMillis: null, filePath: '', speedFactor: null } };
                 this.currentProfile.strategy.properties = this.currentProfile.strategy.properties || { intervalMillis: null, filePath: '', speedFactor: null };
