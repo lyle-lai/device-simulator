@@ -10,14 +10,12 @@ import java.util.Map;
 public interface DataGenerator {
 
     /**
-     * 配置数据生成器
-     * @param config dataGenerator部分的JSON配置
+     * 生成数据.
+     *
+     * @param context 上下文对象，可以包含任何需要的数据，例如:
+     *                - 对于请求-响应模式，它可以是请求报文 (String).
+     *                - 对于需要参数的数据生成器，它可以是属性的Map (Map<String, Object>).
+     * @return 生成的报文内容 (String).
      */
-    void configure(JsonNode config);
-
-    /**
-     * 生成一组模拟数据
-     * @return 代表业务数据的Map
-     */
-    Map<String, Object> generate();
+    String generate(Object context);
 }

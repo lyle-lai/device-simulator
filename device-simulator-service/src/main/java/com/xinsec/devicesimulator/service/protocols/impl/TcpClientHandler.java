@@ -12,10 +12,13 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.annotation.Scope;
+
 import java.util.concurrent.TimeUnit;
 
 @ComponentType("tcp-client")
 @Slf4j
+@Scope("prototype") // 确保每次获取都是新实例
 public class TcpClientHandler implements ProtocolHandler {
 
     private String host;
@@ -36,9 +39,10 @@ public class TcpClientHandler implements ProtocolHandler {
 
     @Override
     public void configure(JsonNode config) {
-        this.host = config.path("host").asText("localhost");
-        this.port = config.path("port").asInt(18888);
-        this.reconnectDelay = config.path("reconnectDelay").asLong(5000);
+        JsonNode propertiesNode = config.path("properties");
+        this.host = propertiesNode.path("host").asText("localhost");
+        this.port = propertiesNode.path("port").asInt(18888);
+        this.reconnectDelay = propertiesNode.path("reconnectDelay").asLong(5000);
     }
 
     @Override
@@ -93,7 +97,8 @@ public class TcpClientHandler implements ProtocolHandler {
 
     @Override
     public void send(Object context, byte[] data) {
-
+        // 对于TCP客户端，context通常不用于发送，直接调用无context的send方法
+        send(data);
     }
 
     @Slf4j

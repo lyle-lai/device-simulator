@@ -16,7 +16,11 @@
     "properties": {}
   },
   "strategy": {
-    "type": "db-request-response",
+    "type": "request-response",
+    "properties": {}
+  },
+  "dataGenerator": {
+    "type": "db-rule-based",
     "properties": {
       "rule_group": "DEFAULT_HEX_RULES"
     }

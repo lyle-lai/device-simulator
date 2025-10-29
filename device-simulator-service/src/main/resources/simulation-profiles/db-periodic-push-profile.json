@@ -17,10 +17,15 @@
     "properties": {}
   },
   "strategy": {
-    "type": "db-periodic-push",
+    "type": "periodic-push",
     "properties": {
-      "intervalMillis": 2000,
-      "payload_group": "DEFAULT_PUSH_PAYLOADS"
+      "intervalMillis": 2000
+    }
+  },
+  "dataGenerator": {
+    "type": "database",
+    "properties": {
+      "payloadName": "DEFAULT_PUSH_PAYLOADS"
     }
   }
 }

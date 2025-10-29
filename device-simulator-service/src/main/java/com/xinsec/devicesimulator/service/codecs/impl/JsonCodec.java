@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import org.springframework.context.annotation.Scope;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +21,7 @@ import java.util.Map;
 @ComponentType("json")
 @Slf4j
 @RequiredArgsConstructor
+@Scope("prototype") // 确保每次获取都是新实例
 public class JsonCodec implements MessageCodec {
 
     private final ObjectMapper objectMapper;
@@ -37,6 +40,17 @@ public class JsonCodec implements MessageCodec {
             return jsonString.getBytes(charset);
         } catch (JsonProcessingException e) {
             log.error("将Map序列化为JSON时失败", e);
+            return new byte[0];
+        }
+    }
+
+    @Override
+    public byte[] encode(String data, Map<String, Object> metadata) {
+        try {
+            // 假定输入字符串已经是 JSON 字符串
+            return data.getBytes(charset);
+        } catch (Exception e) {
+            log.error("将JSON字符串编码为字节时失败", e);
             return new byte[0];
         }
     }

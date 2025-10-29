@@ -1,45 +1,57 @@
 package com.xinsec.devicesimulator.service.datagen.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xinsec.devicesimulator.service.core.ComponentType;
 import com.xinsec.devicesimulator.service.datagen.DataGenerator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @ComponentType("random")
 @Slf4j
+@Scope("prototype") // 确保每次获取都是新实例
 public class RandomDataGenerator implements DataGenerator {
 
-    private List<GeneratorProperty> properties;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public void configure(JsonNode config) {
-        if (config != null && config.has("properties")) {
-            // 将JSON配置中的每个property项转换成GeneratorProperty对象
-            this.properties = StreamSupport.stream(config.get("properties").spliterator(), false)
-                    .map(GeneratorProperty::new)
-                    .collect(Collectors.toList());
-        } else {
-            this.properties = Collections.emptyList();
-            log.warn("RandomDataGenerator在没有 'properties' 的情况下被配置，将只生成空数据。");
+    public String generate(Object context) {
+        if (!(context instanceof Map)) {
+            log.warn("RandomDataGenerator requires a Map context with a 'properties' key.");
+            return "{}";
         }
-    }
+        Map<String, Object> contextMap = (Map<String, Object>) context;
+        JsonNode propertiesNode = objectMapper.convertValue(contextMap.get("properties"), JsonNode.class);
 
-    @Override
-    public Map<String, Object> generate() {
+        if (propertiesNode == null || !propertiesNode.isArray()) {
+            log.warn("RandomDataGenerator requires a 'properties' array in its configuration.");
+            return "{}";
+        }
+
+        List<GeneratorProperty> properties = StreamSupport.stream(propertiesNode.spliterator(), false)
+                .map(GeneratorProperty::new)
+                .collect(Collectors.toList());
+
         Map<String, Object> data = new HashMap<>();
         for (GeneratorProperty prop : properties) {
             data.put(prop.key, prop.generateValue());
         }
-        return data;
+
+        try {
+            return objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing random data to JSON", e);
+            return "{}";
+        }
     }
+
 
     /**
      * 内部类，用于封装单个数据项的生成逻辑

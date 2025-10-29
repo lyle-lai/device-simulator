@@ -27,4 +27,4 @@ simulator:
     # 'file' (default) or 'database'.
     # 'file': Loads simulation profiles from the JSON files specified in the 'file.path' directory.
     # 'database': Loads simulation profiles from the database.
-    provider: file
+    provider: database

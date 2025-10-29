@@ -25,4 +25,12 @@ public class RequestResponseRuleEntity {
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
+
+    public String getRequestKeyword() {
+        return requestKey;
+    }
+
+    public String getResponsePayload() {
+        return responseKey;
+    }
 }

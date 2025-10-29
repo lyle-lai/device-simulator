@@ -12,8 +12,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.annotation.Scope;
+
 @ComponentType("tcp-server")
 @Slf4j
+@Scope("prototype") // 确保每次获取都是新实例
 public class TcpServerHandler implements ProtocolHandler {
 
     private int port;
@@ -25,7 +28,8 @@ public class TcpServerHandler implements ProtocolHandler {
 
     @Override
     public void configure(JsonNode config) {
-        this.port = config.path("port").asInt(18888);
+        JsonNode propertiesNode = config.path("properties");
+        this.port = propertiesNode.path("port").asInt(18888);
     }
 
     @Override

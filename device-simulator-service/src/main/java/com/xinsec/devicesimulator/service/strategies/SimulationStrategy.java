@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.xinsec.devicesimulator.service.codecs.MessageCodec;
 import com.xinsec.devicesimulator.service.datagen.DataGenerator;
 import com.xinsec.devicesimulator.service.protocols.ProtocolHandler;
+import com.xinsec.devicesimulator.service.websocket.WebSocketLogService;
 
 /**
  * 模拟策略/工作流接口
@@ -18,7 +19,7 @@ public interface SimulationStrategy {
      * @param codec 编解码器实例
      * @param generator 数据生成器实例
      */
-    void configure(JsonNode config, ProtocolHandler protocol, MessageCodec codec, DataGenerator generator);
+    void configure(JsonNode config, ProtocolHandler protocol, MessageCodec codec, DataGenerator generator, JsonNode generatorProperties, WebSocketLogService logService, String profileName);
 
     /**
      * 启动策略

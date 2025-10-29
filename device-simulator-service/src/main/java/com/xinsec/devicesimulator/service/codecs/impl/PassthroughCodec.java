@@ -3,6 +3,8 @@ package com.xinsec.devicesimulator.service.codecs.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xinsec.devicesimulator.service.codecs.MessageCodec;
 import com.xinsec.devicesimulator.service.core.ComponentType;
+import org.springframework.context.annotation.Scope;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import java.util.Map;
  * 它不执行任何实际的编码或解码操作。
  */
 @ComponentType("passthrough")
+@Scope("prototype") // 确保每次获取都是新实例
 public class PassthroughCodec implements MessageCodec {
 
     @Override
@@ -26,6 +29,14 @@ public class PassthroughCodec implements MessageCodec {
     public byte[] encode(Map<String, Object> data, Map<String, Object> metadata) {
         if (data != null && data.get("rawData") instanceof byte[]) {
             return (byte[]) data.get("rawData");
+        }
+        return new byte[0];
+    }
+
+    @Override
+    public byte[] encode(String data, Map<String, Object> metadata) {
+        if (data != null) {
+            return data.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         }
         return new byte[0];
     }

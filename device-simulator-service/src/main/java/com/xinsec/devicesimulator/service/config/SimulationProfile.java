@@ -10,11 +10,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SimulationProfile {
     private String profileName;
-    private boolean enabled;
+    private Boolean enabled; // Changed to Boolean wrapper class
     private Device device;
     private JsonNode protocol;
     private JsonNode codec;
     private JsonNode strategy;
+    private JsonNode dataGenerator;
+
+    // Custom getter to provide a default value if 'enabled' is null after deserialization
+    public Boolean getEnabled() {
+        return enabled != null ? enabled : true; // Default to true if not explicitly set
+    }
 
     @Data
     @NoArgsConstructor

@@ -27,4 +27,8 @@ public class PayloadRepositoryEntity {
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
+
+    public String getPayload() {
+        return content;
+    }
 }

@@ -14,4 +14,17 @@ public interface ProfileProvider {
      * @return 配置对象列表
      */
     List<SimulationProfile> loadProfiles();
+
+    /**
+     * 保存或更新一个模拟画像配置。
+     * 如果画像已存在，则更新；否则，创建新画像。
+     * @param profile 要保存的模拟画像配置
+     */
+    void saveProfile(SimulationProfile profile);
+
+    /**
+     * 删除指定名称的模拟画像配置。
+     * @param profileName 要删除的模拟画像的名称
+     */
+    void deleteProfile(String profileName);
 }

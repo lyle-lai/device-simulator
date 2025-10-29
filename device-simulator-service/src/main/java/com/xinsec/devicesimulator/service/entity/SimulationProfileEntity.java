@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 模拟画像实体类，映射到数据库的 simulation_profiles 表
@@ -26,11 +26,6 @@ public class SimulationProfileEntity {
     private String profileName;
 
     /**
-     * 是否启用此画像，引擎将只加载启用的
-     */
-    private Boolean isEnabled;
-
-    /**
      * 存储完整画像配置的JSON字符串
      */
     private String profileConfig;
@@ -38,10 +33,10 @@ public class SimulationProfileEntity {
     /**
      * 创建时间
      */
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     /**
      * 最后更新时间
      */
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 }

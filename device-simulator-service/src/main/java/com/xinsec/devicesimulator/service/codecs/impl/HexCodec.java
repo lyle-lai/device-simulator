@@ -3,6 +3,7 @@ package com.xinsec.devicesimulator.service.codecs.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xinsec.devicesimulator.service.codecs.MessageCodec;
 import com.xinsec.devicesimulator.service.core.ComponentType;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -12,6 +13,7 @@ import java.util.Map;
  * 将字节流与十六进制字符串进行相互转换的编解码器。
  */
 @ComponentType("hex")
+@Scope("prototype") // 确保每次获取都是新实例
 public class HexCodec implements MessageCodec {
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -36,6 +38,14 @@ public class HexCodec implements MessageCodec {
         return new byte[0];
     }
 
+    @Override
+    public byte[] encode(String data, Map<String, Object> metadata) {
+        if (data != null) {
+            return hexToBytes(data);
+        }
+        return new byte[0];
+    }
+
     /**
      * 将收到的字节解码为包含十六进制字符串的Map。
      * @param rawData 收到的原始字节数据
@@ -47,14 +57,17 @@ public class HexCodec implements MessageCodec {
     }
 
     private static String bytesToHex(byte[] bytes) {
-        if (bytes == null) return "";
-        char[] hexChars = new char[bytes.length * 2];
+        if (bytes == null || bytes.length == 0) return "";
+        StringBuilder hexString = new StringBuilder(bytes.length * 3); // 2 chars + 1 space per byte
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+            hexString.append(HEX_ARRAY[v >>> 4]);
+            hexString.append(HEX_ARRAY[v & 0x0F]);
+            if (j < bytes.length - 1) {
+                hexString.append(" "); // Add space between bytes
+            }
         }
-        return new String(hexChars);
+        return hexString.toString();
     }
 
     private static byte[] hexToBytes(String s) {

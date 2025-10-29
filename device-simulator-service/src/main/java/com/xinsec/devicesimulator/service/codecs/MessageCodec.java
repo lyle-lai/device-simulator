@@ -24,6 +24,14 @@ public interface MessageCodec {
     byte[] encode(Map<String, Object> data, Map<String, Object> metadata);
 
     /**
+     * 将业务数据字符串编码为字节
+     * @param data 业务数据字符串
+     * @param metadata 元数据，可能包含编码所需的一些额外信息
+     * @return 编码后的字节数组
+     */
+    byte[] encode(String data, Map<String, Object> metadata);
+
+    /**
      * 将收到的字节解码为业务数据
      * @param rawData 收到的原始字节数据
      * @return 解码后的业务数据Map

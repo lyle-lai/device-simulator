@@ -1,0 +1,72 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.logo {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.el-menu {
+    border-right: none;
+}
+
+/* New styles for log display */
+.log-container {
+    height: 400px;
+    overflow-y: auto;
+    background-color: #282c34;
+    color: #abb2bf;
+    font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+    font-size: 0.85em;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.log-entry {
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    word-break: break-all; /* Break long words */
+    line-height: 1.4;
+    margin-bottom: 2px;
+}
+
+.log-timestamp {
+    color: #61afef; /* Blue */
+    margin-right: 8px;
+}
+
+.log-level {
+    font-weight: bold;
+    margin-right: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.75em;
+}
+
+.log-level.log-info {
+    background-color: #28a745; /* Green */
+    color: white;
+}
+
+.log-level.log-warn {
+    background-color: #ffc107; /* Yellow */
+    color: #333;
+}
+
+.log-level.log-error {
+    background-color: #dc3545; /* Red */
+    color: white;
+}
+
+.log-level.log-debug {
+    background-color: #6c757d; /* Gray */
+    color: white;
+}
+
+.log-message {
+    color: #abb2bf;
+}
