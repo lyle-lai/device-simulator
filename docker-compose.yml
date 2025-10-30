@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  # 设备模拟器应用服务
+  app:
+    image: xinsec/device-simulator:1.0
+    container_name: device-simulator-app
+    restart: always
+    # 使用 host 网络模式，让容器共享宿主机的网络，可以直接访问宿主机所有IP
+    network_mode: "host"
+    # 配置环境变量，用于覆盖 application.yml 中的默认值
+    environment:
+      # 服务端口 (在host模式下，将直接占用宿主机的该端口)
+      - SERVER_PORT=18080
+      # 数据库连接URL (在host模式下，通过127.0.0.1访问宿主机上暴露的数据库端口)
+      - DB_URL=jdbc:mysql://127.0.0.1:3306/simulator_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      - DB_USER=simulator
+      - DB_PASS=simulator_pass
+      # 模拟器配置源 (database 或 file)
+      - SIMULATOR_PROVIDER=database
+    # 数据卷挂载，用于持久化文件类型的画像
+    volumes:
+      - ./data/simulation-profiles:/app/data/simulation-profiles

@@ -1,13 +1,13 @@
 server:
-  port: 18080
+  port: ${SERVER_PORT:18080}
 
 spring:
   application:
     name: device-simulator-service
   datasource:
-    url: jdbc:mysql://10.80.210.73:3306/simulator_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: xinsec
-    password: DB.xinsec@2018
+    url: ${DB_URL:jdbc:mysql://10.80.210.73:3306/simulator_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USER:xinsec}
+    password: ${DB_PASS:DB.xinsec@2018}
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     enabled: true
@@ -26,4 +26,6 @@ simulator:
     # 'file' (default) or 'database'.
     # 'file': Loads simulation profiles from the JSON files specified in the 'file.path' directory.
     # 'database': Loads simulation profiles from the database.
-    provider: database
+    provider: ${SIMULATOR_PROVIDER:database}
+    file:
+      storage-path: ${SIMULATOR_FILE_PATH:./data/simulation-profiles}
