@@ -16,7 +16,7 @@ const App = {
                 profileName: '',
                 enabled: true,
                 device: { id: '' },
-                protocol: { type: 'passthrough', properties: { host: '', port: null, localAddress: '' } }, // Added localAddress
+                protocol: { type: 'passthrough', properties: { host: '', port: null, localAddress: '', reconnectDelay: 5000 } }, // Added localAddress and reconnectDelay
                 codec: { type: 'passthrough' },
                 strategy: {
                     type: 'passthrough',
@@ -47,6 +47,29 @@ const App = {
             availablePayloadKeys: [],    // 新增：可用的报文键列表 (用于规则响应)
             availableRuleGroups: [],  // 新增：可用的规则分组列表
             currentProfileJson: '',
+            profileRules: {
+                profileName: [
+                    { required: true, message: '请输入画像名称', trigger: 'blur' }
+                ],
+                'device.id': [
+                    { required: true, message: '请输入设备ID', trigger: 'blur' }
+                ],
+                'protocol.properties.host': [
+                    { required: true, message: '请输入主机地址', trigger: 'blur' }
+                ],
+                'protocol.properties.port': [
+                    { required: true, message: '请输入端口号', trigger: ['blur', 'change'] }
+                ],
+                'strategy.properties.intervalMillis': [
+                    { required: true, message: '请输入推送间隔', trigger: ['blur', 'change'] }
+                ],
+                 'dataGenerator.properties.groupKey': [
+                    { required: true, message: '请选择报文分组键', trigger: 'change' }
+                ],
+                'dataGenerator.properties.ruleGroup': [
+                    { required: true, message: '请选择规则分组', trigger: 'change' }
+                ]
+            },
             logDialogVisible: false,
             currentLogProfileName: '',
             logs: [],
@@ -200,8 +223,8 @@ const App = {
                 this.currentProfile = JSON.parse(JSON.stringify(profile));
                 // 确保所有嵌套对象和属性都存在，以避免v-model报错
                 this.currentProfile.device = this.currentProfile.device || { id: '' };
-                this.currentProfile.protocol = this.currentProfile.protocol || { type: 'passthrough', properties: { host: '', port: null, localAddress: '' } };
-                this.currentProfile.protocol.properties = this.currentProfile.protocol.properties || { host: '', port: null, localAddress: '' };
+                this.currentProfile.protocol = this.currentProfile.protocol || { type: 'passthrough', properties: { host: '', port: null, localAddress: '', reconnectDelay: 5000 } };
+                this.currentProfile.protocol.properties = this.currentProfile.protocol.properties || { host: '', port: null, localAddress: '', reconnectDelay: 5000 };
                 this.currentProfile.codec = this.currentProfile.codec || { type: 'passthrough' };
                 this.currentProfile.strategy = this.currentProfile.strategy || { type: 'passthrough', properties: { intervalMillis: null, filePath: '', speedFactor: null } };
                 this.currentProfile.strategy.properties = this.currentProfile.strategy.properties || { intervalMillis: null, filePath: '', speedFactor: null };
@@ -222,7 +245,7 @@ const App = {
                     profileName: '',
                     enabled: true,
                     device: { id: '' },
-                    protocol: { type: 'passthrough', properties: { host: '', port: null } },
+                    protocol: { type: 'passthrough', properties: { host: '', port: null, localAddress: '', reconnectDelay: 5000 } },
                     codec: { type: 'passthrough' },
                     strategy: {
                         type: 'passthrough',
@@ -237,68 +260,81 @@ const App = {
                 this.currentProfileJson = '';
             }
             this.profileDialogVisible = true;
+            this.$nextTick(() => {
+                if (this.$refs.profileForm) {
+                    this.$refs.profileForm.clearValidate();
+                }
+            });
         },
         async saveProfile() {
-            try {
-                let profileDataToSend;
+            this.$refs.profileForm.validate(async (valid) => {
+                if (valid) {
+                    try {
+                        let profileDataToSend;
 
-                if (this.currentProfileJson.trim() !== '') {
-                    profileDataToSend = JSON.parse(this.currentProfileJson);
+                        if (this.currentProfileJson.trim() !== '') {
+                            profileDataToSend = JSON.parse(this.currentProfileJson);
+                        } else {
+                            profileDataToSend = JSON.parse(JSON.stringify(this.currentProfile));
+
+                            // 处理随机生成器的propertiesJson
+                            if (profileDataToSend.dataGenerator && profileDataToSend.dataGenerator.type === 'random' && profileDataToSend.dataGenerator.propertiesJson) {
+                                profileDataToSend.dataGenerator.properties = JSON.parse(profileDataToSend.dataGenerator.propertiesJson);
+                            }
+                            if (profileDataToSend.dataGenerator) {
+                                delete profileDataToSend.dataGenerator.propertiesJson;
+                            }
+
+                            // 确保协议属性正确嵌套
+                            if (profileDataToSend.protocol && !profileDataToSend.protocol.properties) {
+                                profileDataToSend.protocol.properties = {};
+                            }
+                            // 确保策略属性正确嵌套
+                            if (profileDataToSend.strategy && !profileDataToSend.strategy.properties) {
+                                profileDataToSend.strategy.properties = {};
+                            }
+                            // Ensure dataGenerator properties are nested correctly
+                            if (profileDataToSend.dataGenerator && !profileDataToSend.dataGenerator.properties) {
+                                profileDataToSend.dataGenerator.properties = {};
+                            }
+                            if (profileDataToSend.dataGenerator.type === 'database') {
+                                profileDataToSend.dataGenerator.properties.groupKey = this.currentProfile.dataGenerator.properties.groupKey;
+                            } else if (profileDataToSend.dataGenerator.type === 'db-rule-based') {
+                                profileDataToSend.dataGenerator.properties.ruleGroup = this.currentProfile.dataGenerator.properties.ruleGroup;
+                            }
+                        }
+
+                        const url = this.isEditing ? `/api/profiles/${profileDataToSend.profileName}` : '/api/profiles';
+                        const method = this.isEditing ? 'PUT' : 'POST';
+
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(profileDataToSend)
+                        });
+
+                        if (response.ok) {
+                            this.$message.success(`画像 ${profileDataToSend.profileName} ${this.isEditing ? '更新' : '创建'}成功!`);
+                            this.profileDialogVisible = false;
+                            this.fetchProfiles();
+                        } else if (response.status === 409) {
+                            this.$message.error(`画像 ${profileDataToSend.profileName} 已存在!`);
+                        } else {
+                            const errorText = await response.text();
+                            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                        }
+                    } catch (error) {
+                        console.error('保存画像失败:', error);
+                        this.$message.error(`保存画像失败: ${error.message}`);
+                    }
                 } else {
-                    profileDataToSend = JSON.parse(JSON.stringify(this.currentProfile));
-
-                    // 处理随机生成器的propertiesJson
-                    if (profileDataToSend.dataGenerator && profileDataToSend.dataGenerator.type === 'random' && profileDataToSend.dataGenerator.propertiesJson) {
-                        profileDataToSend.dataGenerator.properties = JSON.parse(profileDataToSend.dataGenerator.propertiesJson);
-                    }
-                    if (profileDataToSend.dataGenerator) {
-                        delete profileDataToSend.dataGenerator.propertiesJson;
-                    }
-
-                    // 确保协议属性正确嵌套
-                    if (profileDataToSend.protocol && !profileDataToSend.protocol.properties) {
-                        profileDataToSend.protocol.properties = {};
-                    }
-                    // 确保策略属性正确嵌套
-                    if (profileDataToSend.strategy && !profileDataToSend.strategy.properties) {
-                        profileDataToSend.strategy.properties = {};
-                    }
-                    // Ensure dataGenerator properties are nested correctly
-                    if (profileDataToSend.dataGenerator && !profileDataToSend.dataGenerator.properties) {
-                        profileDataToSend.dataGenerator.properties = {};
-                    }
-                    if (profileDataToSend.dataGenerator.type === 'database') {
-                        profileDataToSend.dataGenerator.properties.groupKey = this.currentProfile.dataGenerator.properties.groupKey;
-                    } else if (profileDataToSend.dataGenerator.type === 'db-rule-based') {
-                        profileDataToSend.dataGenerator.properties.ruleGroup = this.currentProfile.dataGenerator.properties.ruleGroup;
-                    }
+                    console.log('表单校验失败!');
+                    this.$message.error('请检查输入项是否都已正确填写！');
+                    return false;
                 }
-
-                const url = this.isEditing ? `/api/profiles/${profileDataToSend.profileName}` : '/api/profiles';
-                const method = this.isEditing ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(profileDataToSend)
-                });
-
-                if (response.ok) {
-                    this.$message.success(`画像 ${profileDataToSend.profileName} ${this.isEditing ? '更新' : '创建'}成功!`);
-                    this.profileDialogVisible = false;
-                    this.fetchProfiles();
-                } else if (response.status === 409) {
-                    this.$message.error(`画像 ${profileDataToSend.profileName} 已存在!`);
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                }
-            } catch (error) {
-                console.error('保存画像失败:', error);
-                this.$message.error(`保存画像失败: ${error.message}`);
-            }
+            });
         },
         async deleteProfile(profileName) {
             try {
@@ -321,88 +357,93 @@ const App = {
                 this.$message.error(`删除画像 ${profileName} 失败: ${error.message}`);
             }
         },
-        // 新增：打开报文编辑/新建对话框
-        openPayloadDialog(payload) {
-            this.isEditingPayload = !!payload;
-            if (payload) {
-                this.currentPayload = JSON.parse(JSON.stringify(payload));
-            } else {
-                this.currentPayload = {
-                    id: null,
-                    payloadKey: '',
-                    groupKey: '',
-                    payloadType: '',
-                    content: '',
-                    description: ''
-                };
-            }
-            this.payloadDialogVisible = true;
-        },
-        // 新增：保存报文
-        async savePayload() {
-            try {
-                const url = this.isEditingPayload ? `/api/payloads/${this.currentPayload.payloadKey}` : '/api/payloads';
-                const method = this.isEditingPayload ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.currentPayload)
-                });
-
-                if (response.ok) {
-                    this.$message.success(`报文 ${this.currentPayload.payloadKey} ${this.isEditingPayload ? '更新' : '创建'}成功!`);
-                    this.payloadDialogVisible = false;
-                    this.fetchPayloads();
-                } else if (response.status === 409) {
-                    this.$message.error(`报文键 ${this.currentPayload.payloadKey} 已存在!`);
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                }
-            } catch (error) {
-                console.error('保存报文失败:', error);
-                this.$message.error(`保存报文失败: ${error.message}`);
-            }
-        },
-        // 新增：删除报文
-        async deletePayload(payloadKey) {
-            try {
-                const response = await fetch(`/api/payloads/${payloadKey}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    this.$message.success(`报文 ${payloadKey} 删除成功!`);
-                    this.fetchPayloads();
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-                }
-            } catch (error) {
-                console.error(`删除报文 ${payloadKey} 失败:`, error);
-                this.$message.error(`删除报文 ${payloadKey} 失败: ${error.message}`);
-            }
-        },
-        // 新增：打开规则编辑/新建对话框
-        openRuleDialog(rule) {
-            this.isEditingRule = !!rule;
-            this.fetchAvailablePayloadKeys(); // 获取可用的报文键
-            if (rule) {
-                this.currentRule = JSON.parse(JSON.stringify(rule));
-            } else {
-                this.currentRule = {
-                    id: null,
-                    ruleGroup: '',
-                    requestKey: '',
-                    responseKey: '',
-                    description: ''
-                };
-            }
-            this.ruleDialogVisible = true;
-        },
+                // 新增：打开报文编辑/新建对话框
+                openPayloadDialog(payload) {
+                    this.isEditingPayload = !!payload;
+                    this.fetchAvailablePayloadGroupKeys(); // 获取可用的报文分组键
+                    if (payload) {
+                        this.currentPayload = JSON.parse(JSON.stringify(payload));
+                    } else {
+                        this.currentPayload = {
+                            id: null,
+                            payloadKey: '',
+                            groupKey: '',
+                            payloadType: 'JSON', // 默认类型
+                            content: '',
+                            description: ''
+                        };
+                    }
+                    this.payloadDialogVisible = true;
+                },
+        
+                // 新增：保存报文
+                async savePayload() {
+                    try {
+                        const url = this.isEditingPayload ? `/api/payloads/${this.currentPayload.payloadKey}` : '/api/payloads';
+                        const method = this.isEditingPayload ? 'PUT' : 'POST';
+        
+                        const response = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.currentPayload)
+                        });
+        
+                        if (response.ok) {
+                            this.$message.success(`报文 ${this.currentPayload.payloadKey} ${this.isEditingPayload ? '更新' : '创建'}成功!`);
+                            this.payloadDialogVisible = false;
+                            this.fetchPayloads();
+                        } else if (response.status === 409) {
+                            this.$message.error(`报文键 ${this.currentPayload.payloadKey} 已存在!`);
+                        } else {
+                            const errorText = await response.text();
+                            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                        }
+                    } catch (error) {
+                        console.error('保存报文失败:', error);
+                        this.$message.error(`保存报文失败: ${error.message}`);
+                    }
+                },
+        
+                // 新增：删除报文
+                async deletePayload(payloadKey) {
+                    try {
+                        const response = await fetch(`/api/payloads/${payloadKey}`, {
+                            method: 'DELETE'
+                        });
+        
+                        if (response.ok) {
+                            this.$message.success(`报文 ${payloadKey} 删除成功!`);
+                            this.fetchPayloads();
+                        } else {
+                            const errorText = await response.text();
+                            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                        }
+                    } catch (error) {
+                        console.error(`删除报文 ${payloadKey} 失败:`, error);
+                        this.$message.error(`删除报文 ${payloadKey} 失败: ${error.message}`);
+                    }
+                },
+        
+                // 新增：打开规则编辑/新建对话框
+                openRuleDialog(rule) {
+                    this.isEditingRule = !!rule;
+                    this.fetchAvailablePayloadKeys(); // 获取可用的报文键
+                    this.fetchAvailableRuleGroups(); // 获取可用的规则分组
+                    if (rule) {
+                        this.currentRule = JSON.parse(JSON.stringify(rule));
+                    } else {
+                        this.currentRule = {
+                            id: null,
+                            ruleGroup: '',
+                            requestKey: '',
+                            responseKey: '',
+                            description: ''
+                        };
+                    }
+                    this.ruleDialogVisible = true;
+                },
         // 新增：保存规则
         async saveRule() {
             try {

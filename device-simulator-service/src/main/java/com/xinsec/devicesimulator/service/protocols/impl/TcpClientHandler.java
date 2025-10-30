@@ -11,11 +11,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.context.annotation.Scope;
 import org.springframework.util.StringUtils;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 
 @ComponentType("tcp-client")
@@ -62,6 +65,34 @@ public class TcpClientHandler implements ProtocolHandler {
         doConnect();
     }
 
+    /**
+     * 检查配置的localAddress是否是本机有效的IP地址
+     * @return 如果地址有效或是未配置地址，返回true；否则返回false
+     */
+    private boolean isLocalAddressValid() {
+        try {
+            // 获取本机所有网络接口
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                // 遍历每个接口上的所有IP地址
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    if (addr.getHostAddress().equals(this.localAddress)) {
+                        return true; // 找到匹配的IP地址
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            log.error("获取本机网络接口信息时发生异常。", e);
+            // 出现异常时，为避免阻断，暂时认为地址有效，让后续Netty连接逻辑处理
+            return true;
+        }
+        return false; // 未找到匹配的IP地址
+    }
+
+
     private void doConnect() {
         if (channel != null && channel.isActive() || group.isShutdown()) {
             log.debug("TCP客户端已连接或正在关闭，跳过连接尝试。");
@@ -70,6 +101,14 @@ public class TcpClientHandler implements ProtocolHandler {
 
         ChannelFuture connectFuture;
         if (StringUtils.hasText(localAddress)) {
+            // 校验本地地址是否有效
+            if (!isLocalAddressValid()) {
+                log.error("配置的本地地址 '{}' 无效，它不属于此主机的任何网络接口。请检查操作系统网络配置。将在 {} 毫秒后重试。", localAddress, reconnectDelay);
+                // 直接安排重连并返回，不进行本次无效的连接尝试
+                group.schedule(this::doConnect, reconnectDelay, TimeUnit.MILLISECONDS);
+                return;
+            }
+
             // 如果指定了本地IP，则绑定到指定IP和随机端口
             connectFuture = bootstrap.connect(new InetSocketAddress(host, port), new InetSocketAddress(localAddress, 0));
             log.info("TCP客户端尝试从本地IP {} 连接到 {}:{}...", localAddress, host, port);

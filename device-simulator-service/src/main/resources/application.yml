@@ -12,14 +12,13 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-  # JPA properties are removed as we are using MyBatis-Plus
-  # jpa:
-  #   hibernate:
-  #     ddl-auto: update
+    baseline-on-migrate: true
+    baseline-version: 0
+
 
 mybatis-plus:
-  mapper-locations: classpath*:/mapper/**/*.xml # If you use XML mappers
-  type-aliases-package: com.xinsec.devicesimulator.service.entity # Package where your entities are located
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.xinsec.devicesimulator.service.entity
 
 
 simulator:
