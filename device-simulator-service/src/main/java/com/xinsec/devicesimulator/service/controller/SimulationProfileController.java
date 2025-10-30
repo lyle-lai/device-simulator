@@ -35,17 +35,17 @@ public class SimulationProfileController {
     @PostMapping
     public ResponseEntity<SimulationProfile> createProfile(@RequestBody SimulationProfile profile) {
         try {
-            // Check if a profile with the same name already exists
+            // 检查同名画像是否已存在
             if (simulationManager.getProfile(profile.getProfileName()) != null) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict
+                return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 冲突
             }
             simulationManager.saveProfile(profile);
             return ResponseEntity.status(HttpStatus.CREATED).body(profile);
         } catch (IllegalArgumentException e) {
-            log.error("Error creating profile: {}", e.getMessage());
+            log.error("创建画像时出错: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
-            log.error("Internal server error creating profile: {}", profile.getProfileName(), e);
+            log.error("创建画像 '{}' 时发生内部服务器错误", profile.getProfileName(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -53,20 +53,21 @@ public class SimulationProfileController {
     @PutMapping("/{profileName}")
     public ResponseEntity<SimulationProfile> updateProfile(@PathVariable String profileName, @RequestBody SimulationProfile profile) {
         if (!profileName.equals(profile.getProfileName())) {
-            return ResponseEntity.badRequest().build(); // Profile name in path must match name in body
+            // 路径中的画像名称必须与请求体中的名称匹配
+            return ResponseEntity.badRequest().build();
         }
         try {
-            // Check if the profile exists before updating
+            // 更新前，先检查画像是否存在
             if (simulationManager.getProfile(profileName) == null) {
                 return ResponseEntity.notFound().build();
             }
-            simulationManager.saveProfile(profile); // saveProfile handles both create and update
+            simulationManager.saveProfile(profile); // saveProfile 方法会处理创建和更新两种情况
             return ResponseEntity.ok(profile);
         } catch (IllegalArgumentException e) {
-            log.error("Error updating profile: {}", e.getMessage());
+            log.error("更新画像时出错: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
-            log.error("Internal server error updating profile: {}", profileName, e);
+            log.error("更新画像 '{}' 时发生内部服务器错误", profileName, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -74,20 +75,20 @@ public class SimulationProfileController {
     @DeleteMapping("/{profileName}")
     public ResponseEntity<Void> deleteProfile(@PathVariable String profileName) {
         try {
-            // Check if the profile exists before deleting
+            // 删除前，先检查画像是否存在
             if (simulationManager.getProfile(profileName) == null) {
                 return ResponseEntity.notFound().build();
             }
             simulationManager.deleteProfile(profileName);
-            return ResponseEntity.noContent().build(); // 204 No Content
+            return ResponseEntity.noContent().build(); // 204 无内容
         } catch (IllegalStateException e) {
-            log.error("Error deleting profile {}: {}", profileName, e.getMessage());
-            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict if instance is running
+            log.error("删除画像 '{}' 时出错: {}", profileName, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 冲突，如果实例正在运行
         } catch (IllegalArgumentException e) {
-            log.error("Error deleting profile: {}", e.getMessage());
+            log.error("删除画像时出错: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (RuntimeException e) {
-            log.error("Internal server error deleting profile: {}", profileName, e);
+            log.error("删除画像 '{}' 时发生内部服务器错误", profileName, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

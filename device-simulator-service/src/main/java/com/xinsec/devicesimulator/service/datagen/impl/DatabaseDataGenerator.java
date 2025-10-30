@@ -32,7 +32,7 @@ public class DatabaseDataGenerator implements DataGenerator {
     @Override
     public String generate(Object context) {
         if (!(context instanceof Map)) {
-            log.warn("DatabaseDataGenerator requires a Map context with 'groupKey'.");
+            log.warn("DatabaseDataGenerator 需要一个包含 'groupKey' 的 Map 上下文。");
             return null;
         }
 
@@ -40,14 +40,14 @@ public class DatabaseDataGenerator implements DataGenerator {
         String groupKey = property.getGroupKey();
 
         if (!StringUtils.hasText(groupKey)) {
-            log.warn("DatabaseDataGenerator requires 'groupKey' in properties.");
+            log.warn("DatabaseDataGenerator 的属性中必须包含 'groupKey'。");
             return null;
         }
 
         List<PayloadRepositoryEntity> payloads = payloadRepositoryMapper.findByGroupKey(groupKey);
 
         if (payloads.isEmpty()) {
-            log.warn("Payload group '{}' not found or is empty in database.", groupKey);
+            log.warn("在数据库中未找到报文分组 '{}'，或者该分组为空。", groupKey);
             return null;
         }
 

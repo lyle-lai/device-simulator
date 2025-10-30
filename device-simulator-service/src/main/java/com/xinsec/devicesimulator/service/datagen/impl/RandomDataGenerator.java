@@ -24,14 +24,14 @@ public class RandomDataGenerator implements DataGenerator {
     @Override
     public String generate(Object context) {
         if (!(context instanceof Map)) {
-            log.warn("RandomDataGenerator requires a Map context with a 'properties' key.");
+            log.warn("RandomDataGenerator 需要一个包含 'properties' 键的 Map 上下文。");
             return "{}";
         }
         Map<String, Object> contextMap = (Map<String, Object>) context;
         JsonNode propertiesNode = objectMapper.convertValue(contextMap.get("properties"), JsonNode.class);
 
         if (propertiesNode == null || !propertiesNode.isArray()) {
-            log.warn("RandomDataGenerator requires a 'properties' array in its configuration.");
+            log.warn("RandomDataGenerator 的配置中需要一个 'properties' 数组。");
             return "{}";
         }
 
@@ -47,7 +47,7 @@ public class RandomDataGenerator implements DataGenerator {
         try {
             return objectMapper.writeValueAsString(data);
         } catch (JsonProcessingException e) {
-            log.error("Error serializing random data to JSON", e);
+            log.error("将随机数据序列化为JSON时出错", e);
             return "{}";
         }
     }
@@ -62,7 +62,7 @@ public class RandomDataGenerator implements DataGenerator {
         final double min;
         final double max;
         final int precision;
-        final List<String> values; // for enum type
+        final List<String> values; // 用于枚举类型
 
         GeneratorProperty(JsonNode node) {
             this.key = node.path("key").asText();
@@ -95,7 +95,7 @@ public class RandomDataGenerator implements DataGenerator {
             } else if ("boolean".equals(lowerCaseDataType)) {
                 return ThreadLocalRandom.current().nextBoolean();
             } else {
-                return "unsupported_type";
+                return "不支持的数据类型";
             }
         }
     }

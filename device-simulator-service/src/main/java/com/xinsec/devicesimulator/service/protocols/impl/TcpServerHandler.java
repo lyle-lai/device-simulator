@@ -51,23 +51,23 @@ public class TcpServerHandler implements ProtocolHandler {
                         }
                     });
 
-            // Bind and start to accept incoming connections.
+            // 绑定并开始接受传入的连接。
             ChannelFuture f = b.bind(port).sync();
             serverChannel = f.channel();
-            log.info("TCP Server started and listening on port {}", port);
+            log.info("TCP服务器已启动，正在监听端口 {}", port);
 
-            // f.channel().closeFuture().sync(); // This would block the main thread
+            // f.channel().closeFuture().sync(); // 这会阻塞主线程，因此被注释掉
         } catch (InterruptedException e) {
-            log.error("TCP Server interrupted during startup", e);
+            log.error("TCP服务器启动过程中被中断", e);
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            log.error("TCP Server failed to start", e);
+            log.error("TCP服务器启动失败", e);
         }
     }
 
     @Override
     public void stop() {
-        log.info("Stopping TCP Server on port {}", port);
+        log.info("正在停止TCP服务器，端口 {}", port);
         if (serverChannel != null) {
             serverChannel.close();
         }
@@ -77,26 +77,26 @@ public class TcpServerHandler implements ProtocolHandler {
         if (workerGroup != null && !workerGroup.isShutdown()) {
             workerGroup.shutdownGracefully();
         }
-        log.info("TCP Server stopped.");
+        log.info("TCP服务器已停止。");
     }
 
     @Override
     public void send(byte[] data) {
-        // This method is not supported for a server as it lacks client context.
-        log.warn("Attempted to send data via context-less send() on TcpServerHandler. This is not supported. Use send(context, data) instead.");
+        // 对于服务端，此方法不受支持，因为它缺少客户端上下文。
+        log.warn("尝试在TcpServerHandler上通过无上下文的send()方法发送数据。此操作不受支持，请改用 send(context, data)。");
     }
 
     @Override
     public void send(Object context, byte[] data) {
         if (!(context instanceof ChannelHandlerContext)) {
-            log.error("Invalid context type provided to TcpServerHandler.send(). Expected ChannelHandlerContext, got {}.", context.getClass().getName());
+            log.error("向TcpServerHandler.send()提供了无效的上下文类型。期望类型: ChannelHandlerContext, 实际类型: {}.", context.getClass().getName());
             return;
         }
         ChannelHandlerContext ctx = (ChannelHandlerContext) context;
         if (ctx.channel().isActive()) {
             ctx.writeAndFlush(Unpooled.wrappedBuffer(data));
         } else {
-            log.warn("Attempted to send data to an inactive channel: {}", ctx.channel().remoteAddress());
+            log.warn("尝试向一个非活动通道发送数据: {}", ctx.channel().remoteAddress());
         }
     }
 
@@ -114,25 +114,25 @@ public class TcpServerHandler implements ProtocolHandler {
                 ByteBuf buf = (ByteBuf) msg;
                 byte[] bytes = new byte[buf.readableBytes()];
                 buf.readBytes(bytes);
-                buf.release(); // Release the ByteBuf
-                // Pass both context and data to the listener
+                buf.release(); // 释放ByteBuf
+                // 将上下文和数据都传递给监听器
                 listener.onMessageReceived(ctx, bytes);
             }
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            log.info("Client connected: {}", ctx.channel().remoteAddress());
+            log.info("客户端已连接: {}", ctx.channel().remoteAddress());
         }
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) {
-            log.info("Client disconnected: {}", ctx.channel().remoteAddress());
+            log.info("客户端已断开连接: {}", ctx.channel().remoteAddress());
         }
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            log.error("Exception in TCP server pipeline from client {}", ctx.channel().remoteAddress(), cause);
+            log.error("TCP服务器pipeline中来自客户端 {} 的异常", ctx.channel().remoteAddress(), cause);
             ctx.close();
         }
     }

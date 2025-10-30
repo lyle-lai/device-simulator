@@ -12,13 +12,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic"); // Enable a simple in-memory broker for broadcasting messages
-        config.setApplicationDestinationPrefixes("/app"); // Prefix for messages from clients to the server
+        // 启用一个简单的基于内存的消息代理，用于向客户端广播消息，目的地前缀为 /topic
+        config.enableSimpleBroker("/topic"); 
+        // 定义从客户端发送到服务器的消息的目标前缀，例如 @MessageMapping("/hello") 的完整路径是 /app/hello
+        config.setApplicationDestinationPrefixes("/app"); 
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Register a STOMP endpoint for clients to connect to
-        registry.addEndpoint("/ws").withSockJS(); // Use SockJS for browser compatibility
+        // 注册一个STOMP端点，客户端将通过这个路径与服务器建立WebSocket连接
+        registry.addEndpoint("/ws").withSockJS(); // 启用SockJS后备选项，以便在浏览器不支持WebSocket时提供兼容性
     }
 }

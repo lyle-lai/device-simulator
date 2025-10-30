@@ -29,10 +29,10 @@ import java.util.stream.Stream;
 @ConditionalOnProperty(name = "simulator.config.provider", havingValue = "file", matchIfMissing = true)
 public class FileProfileProvider implements ProfileProvider {
 
-    // Original classpath scanning for initial profiles (read-only)
+    // 原始的 classpath 扫描，用于加载初始的只读画像
     private static final String CLASSPATH_PROFILES_LOCATION_PATTERN = "classpath*:simulation-profiles/*.json";
 
-    // New: Writable directory for user-managed profiles
+    // 新增：可写入的目录，用于存放用户管理的画像
     @Value("${simulator.config.file.storage-path:./data/simulation-profiles}")
     private String storagePath;
 
@@ -46,9 +46,9 @@ public class FileProfileProvider implements ProfileProvider {
         profileStorageDirectory = Paths.get(storagePath).toAbsolutePath().normalize();
         if (!Files.exists(profileStorageDirectory)) {
             Files.createDirectories(profileStorageDirectory);
-            log.info("Created profile storage directory: {}", profileStorageDirectory);
+            log.info("已创建画像存储目录: {}", profileStorageDirectory);
         } else {
-            log.info("Using existing profile storage directory: {}", profileStorageDirectory);
+            log.info("使用已存在的画像存储目录: {}", profileStorageDirectory);
         }
     }
 
@@ -59,8 +59,8 @@ public class FileProfileProvider implements ProfileProvider {
                 loadFromFileSystem().stream()
         ).collect(Collectors.toList());
 
-        // Ensure uniqueness if profiles with same name exist in both classpath and file system
-        // File system profiles should override classpath profiles
+        // 如果 classpath 和文件系统中存在同名画像，确保唯一性
+        // 文件系统中的画像应覆盖 classpath 中的画像
         return profiles.stream()
                 .collect(Collectors.toMap(SimulationProfile::getProfileName, p -> p, (p1, p2) -> p2))
                 .values()
@@ -69,11 +69,11 @@ public class FileProfileProvider implements ProfileProvider {
     }
 
     private List<SimulationProfile> loadFromClasspath() {
-        log.info("Scanning for profiles in classpath at: {}", CLASSPATH_PROFILES_LOCATION_PATTERN);
+        log.info("正在扫描 classpath 中的画像: {}", CLASSPATH_PROFILES_LOCATION_PATTERN);
         try {
             Resource[] resources = resourcePatternResolver.getResources(CLASSPATH_PROFILES_LOCATION_PATTERN);
             if (resources.length == 0) {
-                log.warn("No simulation profiles found in classpath at location: {}", CLASSPATH_PROFILES_LOCATION_PATTERN);
+                log.warn("在 classpath 位置未找到任何模拟画像: {}", CLASSPATH_PROFILES_LOCATION_PATTERN);
                 return Collections.emptyList();
             }
 
@@ -82,13 +82,13 @@ public class FileProfileProvider implements ProfileProvider {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            log.error("Error scanning for profiles in classpath at location: {}", CLASSPATH_PROFILES_LOCATION_PATTERN, e);
+            log.error("在 classpath 位置扫描画像时出错: {}", CLASSPATH_PROFILES_LOCATION_PATTERN, e);
             return Collections.emptyList();
         }
     }
 
     private List<SimulationProfile> loadFromFileSystem() {
-        log.info("Scanning for profiles in file system at: {}", profileStorageDirectory);
+        log.info("正在文件系统中扫描画像: {}", profileStorageDirectory);
         try (Stream<Path> paths = Files.walk(profileStorageDirectory, 1)) {
             return paths
                     .filter(Files::isRegularFile)
@@ -97,31 +97,31 @@ public class FileProfileProvider implements ProfileProvider {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            log.error("Error scanning for profiles in file system at location: {}", profileStorageDirectory, e);
+            log.error("在文件系统位置扫描画像时出错: {}", profileStorageDirectory, e);
             return Collections.emptyList();
         }
     }
 
     private SimulationProfile loadProfileFromResource(Resource resource) {
         try {
-            log.debug("Loading profile from classpath resource: {}", resource.getFilename());
+            log.debug("从 classpath 资源加载画像: {}", resource.getFilename());
             SimulationProfile profile = objectMapper.readValue(resource.getInputStream(), SimulationProfile.class);
-            log.info("Successfully loaded profile from classpath: {}", profile.getProfileName());
+            log.info("成功从 classpath 加载画像: {}", profile.getProfileName());
             return profile;
         } catch (IOException e) {
-            log.error("Failed to parse profile classpath resource: {}", resource.getFilename(), e);
+            log.error("解析 classpath 画像资源失败: {}", resource.getFilename(), e);
             return null;
         }
     }
 
     private SimulationProfile loadProfileFromFile(Path filePath) {
         try {
-            log.debug("Loading profile from file system: {}", filePath.getFileName());
+            log.debug("从文件系统加载画像: {}", filePath.getFileName());
             SimulationProfile profile = objectMapper.readValue(filePath.toFile(), SimulationProfile.class);
-            log.info("Successfully loaded profile from file system: {}", profile.getProfileName());
+            log.info("成功从文件系统加载画像: {}", profile.getProfileName());
             return profile;
         } catch (IOException e) {
-            log.error("Failed to parse profile file: {}", filePath.getFileName(), e);
+            log.error("解析画像文件失败: {}", filePath.getFileName(), e);
             return null;
         }
     }
@@ -129,39 +129,39 @@ public class FileProfileProvider implements ProfileProvider {
     @Override
     public void saveProfile(SimulationProfile profile) {
         if (profile == null || profile.getProfileName() == null || profile.getProfileName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Profile and profile name cannot be null or empty.");
+            throw new IllegalArgumentException("画像和画像名称不能为空。");
         }
         Path filePath = getProfileFilePath(profile.getProfileName());
         try {
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), profile);
-            log.info("Successfully saved profile '{}' to file: {}", profile.getProfileName(), filePath);
+            log.info("成功将画像 '{}' 保存到文件: {}", profile.getProfileName(), filePath);
         } catch (IOException e) {
-            log.error("Failed to save profile '{}' to file: {}", profile.getProfileName(), filePath, e);
-            throw new RuntimeException("Failed to save profile: " + profile.getProfileName(), e);
+            log.error("将画像 '{}' 保存到文件失败: {}", profile.getProfileName(), filePath, e);
+            throw new RuntimeException("保存画像失败: " + profile.getProfileName(), e);
         }
     }
 
     @Override
     public void deleteProfile(String profileName) {
         if (profileName == null || profileName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Profile name cannot be null or empty.");
+            throw new IllegalArgumentException("画像名称不能为空。");
         }
         Path filePath = getProfileFilePath(profileName);
         try {
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
-                log.info("Successfully deleted profile file: {}", filePath);
+                log.info("成功删除画像文件: {}", filePath);
             } else {
-                log.warn("Attempted to delete non-existent profile file: {}", filePath);
+                log.warn("尝试删除一个不存在的画像文件: {}", filePath);
             }
         } catch (IOException e) {
-            log.error("Failed to delete profile file: {}", filePath, e);
-            throw new RuntimeException("Failed to delete profile: " + profileName, e);
+            log.error("删除画像文件失败: {}", filePath, e);
+            throw new RuntimeException("删除画像失败: " + profileName, e);
         }
     }
 
     private Path getProfileFilePath(String profileName) {
-        // Ensure profile names are safe for file system (e.g., no path separators)
+        // 确保画像名称对于文件系统是安全的（例如，不包含路径分隔符）
         String safeProfileName = profileName.replaceAll("[^a-zA-Z0-9-_.]", "_");
         return profileStorageDirectory.resolve(safeProfileName + ".json");
     }

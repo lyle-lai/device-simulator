@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class DbRuleBasedDataGenerator implements DataGenerator {
 
     private final RequestResponseRuleMapper ruleMapper;
-    private final PayloadRepositoryMapper payloadRepositoryMapper; // 新增：注入报文库Mapper
+    private final PayloadRepositoryMapper payloadRepositoryMapper;
     private final Random random = new Random(); // 用于随机选择
 
     @Override

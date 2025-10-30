@@ -14,10 +14,10 @@ public class WebSocketLogService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public void sendLogMessage(LogMessage logMessage) {
-        log.debug("Sending log message for profile {}: {}", logMessage.getProfileName(), logMessage.getMessage());
-        // Send to a specific topic for the profile, e.g., /topic/logs/profileName
+        log.debug("正在为画像 {} 发送日志消息: {}", logMessage.getProfileName(), logMessage.getMessage());
+        // 发送到特定画像的专用主题，例如 /topic/logs/profileName
         messagingTemplate.convertAndSend("/topic/logs/" + logMessage.getProfileName(), logMessage);
-        // Also send to a general topic for all logs, e.g., /topic/logs/all
+        // 同时发送到一个通用的主题，用于广播所有日志，例如 /topic/logs/all
         messagingTemplate.convertAndSend("/topic/logs/all", logMessage);
     }
 }

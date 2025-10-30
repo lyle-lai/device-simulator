@@ -42,7 +42,7 @@ public class PayloadController {
     public ResponseEntity<PayloadRepositoryEntity> getPayloadByKey(@PathVariable String payloadKey) {
         log.info("请求获取报文, 报文键: {}.", payloadKey);
         QueryWrapper<PayloadRepositoryEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("payload_key", payloadKey);
+        queryWrapper.lambda().eq(PayloadRepositoryEntity::getPayloadKey, payloadKey);
         PayloadRepositoryEntity payload = payloadRepositoryMapper.selectOne(queryWrapper);
         if (payload != null) {
             log.debug("报文 {} 获取成功.", payloadKey);
@@ -62,7 +62,7 @@ public class PayloadController {
     public ResponseEntity<PayloadRepositoryEntity> createPayload(@RequestBody PayloadRepositoryEntity payload) {
         log.info("请求创建新报文, 报文键: {}.", payload.getPayloadKey());
         QueryWrapper<PayloadRepositoryEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("payload_key", payload.getPayloadKey());
+        queryWrapper.lambda().eq(PayloadRepositoryEntity::getPayloadKey, payload.getPayloadKey());
         if (payloadRepositoryMapper.selectCount(queryWrapper) > 0) {
             log.warn("报文键 {} 已存在, 创建失败.", payload.getPayloadKey());
             return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict
@@ -84,7 +84,7 @@ public class PayloadController {
     public ResponseEntity<PayloadRepositoryEntity> updatePayload(@PathVariable String payloadKey, @RequestBody PayloadRepositoryEntity payload) {
         log.info("请求更新报文, 路径报文键: {}.", payloadKey);
         QueryWrapper<PayloadRepositoryEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("payload_key", payloadKey);
+        queryWrapper.lambda().eq(PayloadRepositoryEntity::getPayloadKey, payloadKey);
         PayloadRepositoryEntity existingPayload = payloadRepositoryMapper.selectOne(queryWrapper);
 
         if (existingPayload == null) {
@@ -96,7 +96,7 @@ public class PayloadController {
         if (!payloadKey.equals(payload.getPayloadKey())) {
             log.info("报文键从 {} 变更为 {}. 检查新键是否冲突.", payloadKey, payload.getPayloadKey());
             QueryWrapper<PayloadRepositoryEntity> newKeyQueryWrapper = new QueryWrapper<>();
-            newKeyQueryWrapper.eq("payload_key", payload.getPayloadKey());
+            newKeyQueryWrapper.lambda().eq(PayloadRepositoryEntity::getPayloadKey, payload.getPayloadKey());
             if (payloadRepositoryMapper.selectCount(newKeyQueryWrapper) > 0) {
                 log.warn("新报文键 {} 已存在, 更新失败.", payload.getPayloadKey());
                 return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict with new key
@@ -119,7 +119,7 @@ public class PayloadController {
     public ResponseEntity<Void> deletePayload(@PathVariable String payloadKey) {
         log.info("请求删除报文, 报文键: {}.", payloadKey);
         QueryWrapper<PayloadRepositoryEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("payload_key", payloadKey);
+        queryWrapper.lambda().eq(PayloadRepositoryEntity::getPayloadKey, payloadKey);
         int deletedRows = payloadRepositoryMapper.delete(queryWrapper);
         if (deletedRows > 0) {
             log.info("报文 {} 删除成功.", payloadKey);

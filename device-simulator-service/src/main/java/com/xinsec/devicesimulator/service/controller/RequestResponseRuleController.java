@@ -33,12 +33,13 @@ public class RequestResponseRuleController {
 
     @PostMapping
     public ResponseEntity<RequestResponseRuleEntity> createRule(@RequestBody RequestResponseRuleEntity rule) {
-        // Check for existing rule with same requestKey within the same ruleGroup
+        // 检查同一规则分组下是否存在具有相同请求键的规则
         QueryWrapper<RequestResponseRuleEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("rule_group", rule.getRuleGroup());
-        queryWrapper.eq("request_key", rule.getRequestKey());
+        queryWrapper.lambda()
+                .eq(RequestResponseRuleEntity::getRuleGroup, rule.getRuleGroup())
+                .eq(RequestResponseRuleEntity::getRequestKey, rule.getRequestKey());
         if (ruleMapper.selectCount(queryWrapper) > 0) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict
+            return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 冲突
         }
         rule.setCreateTime(LocalDateTime.now());
         rule.setUpdateTime(LocalDateTime.now());
@@ -54,14 +55,15 @@ public class RequestResponseRuleController {
             return ResponseEntity.notFound().build();
         }
 
-        // Check for conflict if ruleGroup or requestKey is changed
+        // 如果规则分组或请求键被更改，则检查是否存在冲突
         if (!existingRule.getRuleGroup().equals(rule.getRuleGroup()) || !existingRule.getRequestKey().equals(rule.getRequestKey())) {
             QueryWrapper<RequestResponseRuleEntity> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("rule_group", rule.getRuleGroup());
-            queryWrapper.eq("request_key", rule.getRequestKey());
-            queryWrapper.ne("id", id); // Exclude current rule from conflict check
+            queryWrapper.lambda()
+                    .eq(RequestResponseRuleEntity::getRuleGroup, rule.getRuleGroup())
+                    .eq(RequestResponseRuleEntity::getRequestKey, rule.getRequestKey())
+                    .ne(RequestResponseRuleEntity::getId, id); // 从冲突检查中排除当前规则
             if (ruleMapper.selectCount(queryWrapper) > 0) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 Conflict
+                return ResponseEntity.status(HttpStatus.CONFLICT).build(); // 409 冲突
             }
         }
 
