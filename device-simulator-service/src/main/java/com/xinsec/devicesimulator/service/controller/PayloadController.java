@@ -29,7 +29,7 @@ public class PayloadController {
      */
     @GetMapping
     public List<PayloadRepositoryEntity> getAllPayloads() {
-        log.info("请求获取所有报文.");
+//        log.info("请求获取所有报文.");
         return payloadRepositoryMapper.selectList(null);
     }
 

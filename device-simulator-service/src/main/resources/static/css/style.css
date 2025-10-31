@@ -70,3 +70,64 @@ body {
 .log-message {
     color: #abb2bf;
 }
+
+/* --- 登录页面样式 --- */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+}
+
+.login-card {
+    width: 420px;
+    border-radius: 10px;
+}
+
+.login-title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.login-title-icon {
+    font-size: 48px;
+    color: #409EFF;
+}
+
+.login-title-text {
+    font-size: 1.6em;
+    font-weight: 600;
+    margin-top: 15px;
+    color: #303133;
+}
+
+.login-error-alert {
+    margin-bottom: 22px; /* 与 el-form-item 的 margin-bottom 对齐 */
+}
+
+/* --- 主应用界面样式 --- */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e6e6e6;
+    height: 60px;
+}
+
+.header-title {
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.header-user-info {
+    display: flex;
+    align-items: center;
+}
+
+.box-card {
+    margin-bottom: 20px;
+}
