@@ -33,7 +33,7 @@ public class PeriodicPushStrategy implements SimulationStrategy {
     private Map<String, Object> generatorProperties;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private WebSocketLogService webSocketLogService; // 新增：WebSocket日志服务
-    private String profileName; // 新增：画像名称
+    private String profileName; // 画像名称
 
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> scheduledFuture;
@@ -53,7 +53,12 @@ public class PeriodicPushStrategy implements SimulationStrategy {
 
     @Override
     public void execute() {
-        protocolHandler.start(null);
+        // 启动协议处理器，使用一个仅记录日志的空监听器
+        protocolHandler.start((context, data) -> {
+            sendLog(Level.TRACE, "定时推送策略收到外部消息（已忽略）");
+        });
+
+        // 直接启动定时任务
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduledFuture = scheduler.scheduleAtFixedRate(this::generateAndSendData, 0, intervalMillis, TimeUnit.MILLISECONDS);
         sendLog(Level.INFO, "定时推送策略已启动。每 " + intervalMillis + " 毫秒推送一次数据。");
@@ -73,7 +78,7 @@ public class PeriodicPushStrategy implements SimulationStrategy {
 
     private void generateAndSendData() {
         try {
-            // 1. 生成数据，将properties作为上下文传入
+            // 1. 生成数据
             String data = dataGenerator.generate(generatorProperties);
             if (data == null) {
                 sendLog(Level.TRACE, "数据生成器未返回数据，跳过本次发送。");
@@ -89,11 +94,11 @@ public class PeriodicPushStrategy implements SimulationStrategy {
             }
             sendLog(Level.DEBUG, "编码后数据长度: " + encodedData.length);
 
-            // 3. 发送数据
+            // 3. 发送数据 (无上下文的send)
             protocolHandler.send(encodedData);
 
         } catch (Exception e) {
-            sendLog(Level.ERROR, "定时推送任务执行时发生错误。" + e.getMessage());
+            sendLog(Level.ERROR, "定时推送任务执行时发生错误: " + e.getMessage());
             log.error("定时推送任务执行时发生错误。", e); // 传统日志保留堆栈信息
         }
     }
@@ -105,11 +110,21 @@ public class PeriodicPushStrategy implements SimulationStrategy {
         }
         // Also keep traditional logging for file/console output
         switch (level) {
-            case INFO: log.info(message); break;
-            case WARN: log.warn(message); break;
-            case ERROR: log.error(message); break;
-            case DEBUG: log.debug(message); break;
-            case TRACE: log.trace(message); break;
+            case INFO:
+                log.info(message);
+                break;
+            case WARN:
+                log.warn(message);
+                break;
+            case ERROR:
+                log.error(message);
+                break;
+            case DEBUG:
+                log.debug(message);
+                break;
+            case TRACE:
+                log.trace(message);
+                break;
         }
     }
 

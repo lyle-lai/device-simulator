@@ -2,16 +2,12 @@ package com.xinsec.devicesimulator.service.protocols.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.xinsec.devicesimulator.service.core.ComponentType;
+import com.xinsec.devicesimulator.service.manage.NettyResourceManager;
 import com.xinsec.devicesimulator.service.protocols.ProtocolHandler;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 @ComponentType("tcp-server")
@@ -22,9 +18,8 @@ public class TcpServerHandler implements ProtocolHandler {
     private int port;
     private MessageListener messageListener;
 
-    private EventLoopGroup bossGroup;
-    private EventLoopGroup workerGroup;
-    private Channel serverChannel;
+    @Autowired
+    private NettyResourceManager nettyResourceManager;
 
     @Override
     public void configure(JsonNode config) {
@@ -35,55 +30,23 @@ public class TcpServerHandler implements ProtocolHandler {
     @Override
     public void start(MessageListener listener) {
         this.messageListener = listener;
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup();
-
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) {
-                            ch.pipeline().addLast(new TcpServerInboundHandler(messageListener));
-                        }
-                    });
-
-            // 绑定并开始接受传入的连接。
-            ChannelFuture f = b.bind(port).sync();
-            serverChannel = f.channel();
-            log.info("TCP服务器已启动，正在监听端口 {}", port);
-
-            // f.channel().closeFuture().sync(); // 这会阻塞主线程，因此被注释掉
-        } catch (InterruptedException e) {
-            log.error("TCP服务器启动过程中被中断", e);
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            log.error("TCP服务器启动失败", e);
-        }
+        log.info("请求端口 {} 上的共享TCP服务器", port);
+        nettyResourceManager.acquireServer(port, this.messageListener);
     }
 
     @Override
     public void stop() {
-        log.info("正在停止TCP服务器，端口 {}", port);
-        if (serverChannel != null) {
-            serverChannel.close();
+        log.info("释放端口 {} 上的共享TCP服务器", port);
+        if (this.messageListener != null) {
+            nettyResourceManager.releaseServer(port, this.messageListener);
         }
-        if (bossGroup != null && !bossGroup.isShutdown()) {
-            bossGroup.shutdownGracefully();
-        }
-        if (workerGroup != null && !workerGroup.isShutdown()) {
-            workerGroup.shutdownGracefully();
-        }
-        log.info("TCP服务器已停止。");
     }
 
     @Override
     public void send(byte[] data) {
-        // 对于服务端，此方法不受支持，因为它缺少客户端上下文。
-        log.warn("尝试在TcpServerHandler上通过无上下文的send()方法发送数据。此操作不受支持，请改用 send(context, data)。");
+        // 对于服务端，无上下文的send被定义为向所有连接的客户端广播
+        log.debug("广播 {} 字节数据到端口 {} 上的所有客户端", data.length, port);
+        nettyResourceManager.broadcastToServer(port, data);
     }
 
     @Override
@@ -97,43 +60,6 @@ public class TcpServerHandler implements ProtocolHandler {
             ctx.writeAndFlush(Unpooled.wrappedBuffer(data));
         } else {
             log.warn("尝试向一个非活动通道发送数据: {}", ctx.channel().remoteAddress());
-        }
-    }
-
-    @Slf4j
-    private static class TcpServerInboundHandler extends ChannelInboundHandlerAdapter {
-        private final MessageListener listener;
-
-        public TcpServerInboundHandler(MessageListener listener) {
-            this.listener = listener;
-        }
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            if (listener != null && msg instanceof ByteBuf) {
-                ByteBuf buf = (ByteBuf) msg;
-                byte[] bytes = new byte[buf.readableBytes()];
-                buf.readBytes(bytes);
-                buf.release(); // 释放ByteBuf
-                // 将上下文和数据都传递给监听器
-                listener.onMessageReceived(ctx, bytes);
-            }
-        }
-
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) {
-            log.info("客户端已连接: {}", ctx.channel().remoteAddress());
-        }
-
-        @Override
-        public void channelInactive(ChannelHandlerContext ctx) {
-            log.info("客户端已断开连接: {}", ctx.channel().remoteAddress());
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            log.error("TCP服务器pipeline中来自客户端 {} 的异常", ctx.channel().remoteAddress(), cause);
-            ctx.close();
         }
     }
 }
