@@ -1,9 +1,10 @@
-import Login from '../components/Login.js';
-import MainLayout from '../components/MainLayout.js';
-import InstanceMonitor from '../components/InstanceMonitor.js';
-import ProfileManagement from '../components/ProfileManagement.js';
-import PayloadManagement from '../components/PayloadManagement.js';
-import RuleManagement from '../components/RuleManagement.js';
+import { createRouter, createWebHistory } from 'vue-router'; // 从npm包导入
+import Login from '../components/Login.vue';
+import MainLayout from '../components/MainLayout.vue';
+import InstanceMonitor from '../components/InstanceMonitor.vue';
+import ProfileManagement from '../components/ProfileManagement.vue';
+import PayloadManagement from '../components/PayloadManagement.vue';
+import RuleManagement from '../components/RuleManagement.vue';
 
 const routes = [
     {
@@ -41,8 +42,8 @@ const routes = [
     }
 ];
 
-const router = VueRouter.createRouter({
-    history: VueRouter.createWebHistory(),
+const router = createRouter({ // 直接使用导入的函数
+    history: createWebHistory(), // 直接使用导入的函数
     routes,
 });
 

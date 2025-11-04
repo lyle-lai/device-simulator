@@ -47,7 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // 配置URL授权规则
             .authorizeRequests()
                 // 允许匿名访问静态资源和登录页面
-                .antMatchers("/", "/index.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
+                .antMatchers("/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
                 // 允许匿名访问登录接口
                 .antMatchers("/api/auth/login").permitAll()
                 // 其他所有 /api/** 的请求都需要认证
